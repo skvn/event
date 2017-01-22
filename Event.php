@@ -2,8 +2,12 @@
 
 namespace Skvn\Event;
 
+use Skvn\Base\Traits\ArrayAccessImpl;
+
 class Event implements Contracts\Event, \ArrayAccess
 {
+    use ArrayAccessImpl;
+
     protected $payload;
 
     function __construct($payload = [])
@@ -16,24 +20,9 @@ class Event implements Contracts\Event, \ArrayAccess
         return $this->payload;
     }
 
-    function offsetExists($offset)
+    function get($param)
     {
-        return isset($this->payload[$offset]);
-    }
-
-    function offsetGet($offset)
-    {
-        return $this->payload[$offset] ?? null;
-    }
-
-    function offsetSet($offset, $value)
-    {
-        return false;
-    }
-
-    function offsetUnset($offset)
-    {
-        return false;
+        return $this->payload[$param] ?? null;
     }
 
 

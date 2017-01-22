@@ -5,14 +5,14 @@ namespace Skvn\Event;
 use Skvn\Base\Exceptions\Exception;
 use Skvn\Base\Container;
 
-class Dispatcher
+class EventDispatcher
 {
     protected $listeners = [];
     protected $container = null;
 
     function __construct()
     {
-        $this->container = new Container();
+        $this->container = Container :: getInstance();
     }
 
 
@@ -57,12 +57,12 @@ class Dispatcher
 
     protected function queue(Contracts\Event $event)
     {
-
+        $this->container['queue']->push($event);
     }
 
     protected function browserify(Contracts\Event $event)
     {
-
+        $this->container['ws']->push($event);
     }
 
     protected function callListener($listener, Contracts\Event $event)
@@ -81,61 +81,5 @@ class Dispatcher
         throw new Exception('Unknown listener format');
     }
 
-
-
-
-
-
-    /**
-     * Create a callable for putting an event handler on the queue.
-     *
-     * @param  string  $class
-     * @param  string  $method
-     * @return \Closure
-     */
-    protected function createQueuedHandlerCallable($class, $method)
-    {
-        return function () use ($class, $method) {
-            $arguments = $this->cloneArgumentsForQueueing(func_get_args());
-
-            if (method_exists($class, 'queue')) {
-                $this->callQueueMethodOnHandler($class, $method, $arguments);
-            } else {
-                $this->resolveQueue()->push('Illuminate\Events\CallQueuedHandler@call', [
-                    'class' => $class, 'method' => $method, 'data' => serialize($arguments),
-                ]);
-            }
-        };
-    }
-
-    /**
-     * Clone the given arguments for queueing.
-     *
-     * @param  array  $arguments
-     * @return array
-     */
-    protected function cloneArgumentsForQueueing(array $arguments)
-    {
-        return array_map(function ($a) {
-            return is_object($a) ? clone $a : $a;
-        }, $arguments);
-    }
-
-    /**
-     * Call the queue method on the handler class.
-     *
-     * @param  string  $class
-     * @param  string  $method
-     * @param  array  $arguments
-     * @return void
-     */
-    protected function callQueueMethodOnHandler($class, $method, $arguments)
-    {
-        $handler = (new ReflectionClass($class))->newInstanceWithoutConstructor();
-
-        $handler->queue($this->resolveQueue(), 'Illuminate\Events\CallQueuedHandler@call', [
-            'class' => $class, 'method' => $method, 'data' => serialize($arguments),
-        ]);
-    }
 
 }
