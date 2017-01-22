@@ -11,6 +11,11 @@ class Event implements Contracts\Event, \ArrayAccess
         $this->payload = $payload;
     }
 
+    function payload()
+    {
+        return $this->payload;
+    }
+
     function offsetExists($offset)
     {
         return isset($this->payload[$offset]);
