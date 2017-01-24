@@ -78,4 +78,9 @@ class QueueDispatcher
         }
         return $this->queues[$name];
     }
+
+    function registerQueue($name, Queue\Connection $connection)
+    {
+        $this->queues[$name] = $connection;
+    }
 }

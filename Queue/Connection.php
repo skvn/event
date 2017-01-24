@@ -14,6 +14,7 @@ abstract class Connection
     function __construct($queue, $config = [])
     {
         $this->queueName = $queue;
+        $this->config = $config;
         $this->container = Container :: getInstance();
     }
 
