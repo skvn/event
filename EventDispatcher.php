@@ -45,12 +45,27 @@ class EventDispatcher
     {
         $responses = [];
 
+        if ($event instanceof Contracts\SelfHandlingEvent) {
+            $responses[] = $event->handle();
+        }
+
         foreach ($this->listeners[get_class($event)] ?? [] as $listener) {
             $result = $this->callListener($listener, $event);
             if ($result === false) {
-                return;
+                return $this->handleResponses($responses);
             }
             $responses[] = $result;
+        }
+        return $this->handleResponses($event, $responses);
+    }
+
+    protected function handleResponses(Contracts\Event $event, $responses)
+    {
+        $responses = array_filter($responses, function($item){return !empty($item);});
+        if ($event instanceof Contracts\SelfHandlingEvent) {
+            if (count($responses) > 0) {
+                return array_shift($responses);
+            }
         }
         return $responses;
     }
