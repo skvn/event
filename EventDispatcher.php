@@ -52,7 +52,7 @@ class EventDispatcher
         foreach ($this->listeners[get_class($event)] ?? [] as $listener) {
             $result = $this->callListener($listener, $event);
             if ($result === false) {
-                return $this->handleResponses($responses);
+                return false;
             }
             $responses[] = $result;
         }
