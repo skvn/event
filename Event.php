@@ -2,12 +2,12 @@
 
 namespace Skvn\Event;
 
-use Skvn\Base\Traits\ArrayAccessImpl;
+use Skvn\Base\Traits\ArrayOrObjectAccessImpl;
 use Skvn\Base\Container;
 
 class Event implements Contracts\Event, \ArrayAccess
 {
-    use ArrayAccessImpl;
+    use ArrayOrObjectAccessImpl;
 
     protected $payload;
     protected $container;
@@ -27,6 +27,7 @@ class Event implements Contracts\Event, \ArrayAccess
     {
         return $this->payload[$param] ?? null;
     }
+
 
 
 
