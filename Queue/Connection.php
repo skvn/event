@@ -21,5 +21,8 @@ abstract class Connection
     abstract public function push($event);
     abstract public function pop();
     abstract public function fetch($limit);
+    abstract public function fail($ids, $error);
+    abstract public function success($ids);
+
 
 }

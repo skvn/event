@@ -31,16 +31,10 @@ class QueueDispatcher
     function pop($queue)
     {
         $data = $this->connection($queue)->pop();
-        return $this->createEvent($data['event_name'], $data['payload']);
-    }
-
-    function createEvent($name, $payload)
-    {
-        $event = $this->container->create($name);
-        if (method_exists($event, 'payload')) {
-            $event->payload($this->decode($payload));
+        if ($data)
+        {
+            return $this->createEvent($data);
         }
-        return $event;
     }
 
     function fetch($queue, $limit = 10)
@@ -48,10 +42,31 @@ class QueueDispatcher
         $data = $this->connection($queue)->fetch($limit);
         $events = [];
         foreach ($data as $row) {
-            $events[] = $this->createEvent($row['event_name'], $row['payload']);
+            $events[] = $this->createEvent($row);
         }
         return $events;
     }
+
+    protected function createEvent($data)
+    {
+        $event = $this->container->create($data['event_name']);
+        if (method_exists($event, 'payload')) {
+            $event->payload($this->decode($data['payload']));
+        }
+        $event->id = $data['id'];
+        return $event;
+    }
+
+    function fail($queue, $ids, $error)
+    {
+        $this->connection($queue)->fail($ids, $error);
+    }
+
+    function success($queue, $ids)
+    {
+        $this->connection($queue)->success($ids);
+    }
+
 
     function getDefaultQueueName()
     {
@@ -68,19 +83,55 @@ class QueueDispatcher
         return json_decode($data, true);
     }
 
-    function connection($name = null)
+    protected function connection($name = null)
     {
         if (is_null($name)) {
             $name = $this->getDefaultQueueName();
         }
         if (!isset($this->queues[$name])) {
-            throw new Exceptions\QueueException('Queue not found');
+            throw new Exceptions\QueueException('Queue ' . $name . ' not defined');
         }
-        return $this->queues[$name];
+        if (is_null($this->queues[$name]['conn'])) {
+            $this->queues[$name]['conn'] = $this->createConnection($name, $this->queues[$name]['config']);
+        }
+        return $this->queues[$name]['conn'];
     }
 
-    function registerQueue($name, Queue\Connection $connection)
+    protected function createConnection($name, $config)
     {
-        $this->queues[$name] = $connection;
+        return new Queue\DatabaseConnection($name, $config);
     }
+
+    function registerQueue($name, $config)
+    {
+        $this->queues[$name] = ['name' => $name, 'config' => $config, 'conn' => null];
+    }
+
+    function getQueueConfig($name = null)
+    {
+        if (is_null($name)) {
+            $name = $this->getDefaultQueueName();
+        }
+        if (!isset($this->queues[$name])) {
+            throw new Exceptions\QueueException('Queue ' . $name . 'not defined');
+        }
+        return $this->queues[$name]['config'];
+    }
+
+    function getRegisteredQueues()
+    {
+        return $this->queues;
+    }
+
+    function shouldStart($name, $prev)
+    {
+        $config = $this->getQueueConfig($name);
+        if (!empty($config['discrete'])) {
+            return (time()-$prev) > $config['discrete'];
+        } else {
+            return true;
+        }
+
+    }
+
 }

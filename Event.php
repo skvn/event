@@ -11,6 +11,7 @@ class Event implements Contracts\Event, \ArrayAccess
 
     protected $payload;
     protected $container;
+    public $id;
 
     function __construct($payload = [])
     {
@@ -18,8 +19,11 @@ class Event implements Contracts\Event, \ArrayAccess
         $this->container = Container :: getInstance();
     }
 
-    function payload()
+    function payload($payload = null)
     {
+        if (!is_null($payload)) {
+            $this->payload = $payload;
+        }
         return $this->payload;
     }
 
