@@ -61,7 +61,7 @@ class EventDispatcher
 
     protected function handleResponses(Contracts\Event $event, $responses)
     {
-        $responses = array_filter($responses, function($item){return !empty($item);});
+        //$responses = array_filter($responses, function($item){return !empty($item);});
         if ($event instanceof Contracts\SelfHandlingEvent) {
             if (count($responses) > 0) {
                 return array_shift($responses);
