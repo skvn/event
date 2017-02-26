@@ -10,9 +10,12 @@ class QueueDispatcher
     protected $queues = [];
 
 
-    function __construct()
+    function __construct($config = [])
     {
         $this->container = Container :: getInstance();
+        foreach ($config['queues'] ?? [] as $name => $qconfig) {
+            $this->registerQueue($name, $qconfig);
+        }
     }
 
     function push($event)

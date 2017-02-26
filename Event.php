@@ -11,12 +11,13 @@ class Event implements Contracts\Event, \ArrayAccess
 
     protected $payload;
     protected $container;
+    public $app;
     public $id;
 
     function __construct($payload = [])
     {
         $this->payload = $payload;
-        $this->container = Container :: getInstance();
+        $this->app = $this->container = Container :: getInstance();
     }
 
     function payload($payload = null)
