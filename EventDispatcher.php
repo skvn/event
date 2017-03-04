@@ -4,16 +4,13 @@ namespace Skvn\Event;
 
 use Skvn\Base\Exceptions\Exception;
 use Skvn\Base\Container;
+use Skvn\Base\Traits\AppHolder;
 
 class EventDispatcher
 {
-    protected $listeners = [];
-    protected $container = null;
+    use AppHolder;
 
-    function __construct()
-    {
-        $this->container = Container :: getInstance();
-    }
+    protected $listeners = [];
 
 
     public function listen($class, $listener, $prepend = false)
@@ -72,12 +69,12 @@ class EventDispatcher
 
     protected function queue(Contracts\Event $event)
     {
-        $this->container['queue']->push($event);
+        $this->app['queue']->push($event);
     }
 
     protected function browserify(Contracts\Event $event)
     {
-        $this->container['ws']->push($event);
+        $this->app['ws']->push($event);
     }
 
     protected function callListener($listener, Contracts\Event $event)
@@ -90,7 +87,7 @@ class EventDispatcher
         }
         if (is_string($listener) && strpos($listener, '@') !== false) {
             list($class, $method) = explode('@', $listener);
-            $obj = $this->container->make($class);
+            $obj = $this->app->make($class);
             return call_user_func([$obj, $method], $event);
         }
         throw new Exception('Unknown listener format');

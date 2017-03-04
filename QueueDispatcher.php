@@ -2,17 +2,17 @@
 
 namespace Skvn\Event;
 
-use Skvn\Base\Container;
+use Skvn\Base\Traits\AppHolder;
 
 class QueueDispatcher
 {
-    protected $container = null;
+    use AppHolder;
+
     protected $queues = [];
 
 
     function __construct($config = [])
     {
-        $this->container = Container :: getInstance();
         foreach ($config['queues'] ?? [] as $name => $qconfig) {
             $this->registerQueue($name, $qconfig);
         }
@@ -52,7 +52,7 @@ class QueueDispatcher
 
     protected function createEvent($data)
     {
-        $event = $this->container->create($data['event_name']);
+        $event = $this->app->create($data['event_name']);
         if (method_exists($event, 'payload')) {
             $event->payload($this->decode($data['payload']));
         }
