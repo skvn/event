@@ -39,7 +39,7 @@ class Listener extends ConsoleActionEvent
                         PHP_BINARY,
                         $this->app->request->getServer('SCRIPT_NAME'),
                         Str :: snake(Str :: classBasename($this)) . '/run',
-                        '--queue=' . $queue['name']
+                        ' ' . $queue['name']
                     ]);
                     //$this->stdout($command);
                     $queue['proc'] = proc_open($command, $descriptors, $queue['pipes']);
