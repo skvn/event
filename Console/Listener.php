@@ -2,13 +2,22 @@
 
 namespace Skvn\Event\Console;
 
-use Skvn\App\Events\ActionEvent;
-use Skvn\Base\Container;
+use Skvn\App\Events\ConsoleActionEvent;
 use Skvn\Base\Helpers\Str;
+use Skvn\Base\Traits\SelfDescribe;
+use Skvn\Event\Events\Log as LogEvent;
 
-class Listener extends ActionEvent
+/**
+ * Listen to queue events
+ * @package Skvn\App\Console
+ */
+class Listener extends ConsoleActionEvent
 {
+    use SelfDescribe;
 
+    /**
+     * Start separate listener on each defined queue
+     */
     function actionStart()
     {
         $qlist = [];
@@ -21,20 +30,11 @@ class Listener extends ActionEvent
         }
         $this->writePid('queue.pid');
         while (true) {
-//            var_dump(array_map(function($item){
-//                return 'name=' . $item['name'] . ';pid=' . $item['pid'] . ';started=' . $item['started'];
-//            }, $qlist));
             $this->stdout('<bold>' . number_format(memory_get_usage()) . '</bold>');
             foreach ($qlist as &$queue) {
                 if (!$this->checkProcess('queue_' . $queue['name'] . '.pid') && $this->app->queue->shouldStart($queue['name'], $queue['started'])) {
                     $msg = 'Starting ' . $queue['name'] . '.......';
-                    //$pipes = [];
                     $descriptors = [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']];
-//                    $descriptors = [
-//                        ['pipe', 'r'],
-//                        ['file', $this->app->getPath('@locks/' . $queue['name'] . '_output'), 'a'],
-//                        ['file', $this->app->getPath('@locks/' . $queue['name'] . '_error'), 'a'],
-//                    ];
                     $command = implode(' ', [
                         PHP_BINARY,
                         $this->app->request->getServer('SCRIPT_NAME'),
@@ -68,12 +68,17 @@ class Listener extends ActionEvent
         }
     }
 
+    /**
+     * Start listener on single queue
+     * @argument *queue string name of queue
+     *
+     * @throws \Skvn\Base\Exceptions\Exception
+     */
     function actionRun()
     {
-        $container = \Skvn\Base\Container :: getInstance();
-        $container['config']['database.log'] = true;
+        $this->app['config']['database.log'] = true;
 
-        $queueName = $this->app->request->getOption('queue');
+        $queueName = $this->arguments[0];
         $this->writePid('queue_' . $queueName . '.pid');
         $config = $this->app->queue->getQueueConfig($queueName);
         if (!empty($config['discrete'])) {
@@ -145,8 +150,15 @@ class Listener extends ActionEvent
     {
         $message = sprintf('%s [%s.%d] %s', date('H:i:s'), $queue, posix_getpid(), $message);
         $this->stdout($message);
+        $this->app->triggerEvent(new LogEvent([
+            'message' => $message,
+            'category' => 'queue/' . $queue
+        ]));
     }
 
+    /**
+     * Check listener status
+     */
     function actionCheck()
     {
         if ($this->checkProcess('queue.pid')) {
