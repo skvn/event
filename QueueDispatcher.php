@@ -63,11 +63,16 @@ class QueueDispatcher
     function fail($queue, $ids, $error)
     {
         $this->connection($queue)->fail($ids, $error);
+        $this->app->triggerEvent(new Events\QueueFail([
+            'ids' => (array) $ids,
+            'error' => $error
+        ]));
     }
 
     function success($queue, $ids)
     {
-        $this->connection($queue)->success($ids);
+        $events = $this->connection($queue)->success($ids);
+        $this->app->triggerEvent(new Events\QueueDone(['events' => $events]));
     }
 
 
@@ -88,21 +93,18 @@ class QueueDispatcher
 
     protected function connection($name = null)
     {
-        if (is_null($name)) {
-            $name = $this->getDefaultQueueName();
-        }
-        if (!isset($this->queues[$name])) {
-            throw new Exceptions\QueueException('Queue ' . $name . ' not defined');
-        }
+        $config = $this->getQueueConfig($name);
         if (is_null($this->queues[$name]['conn'])) {
-            $this->queues[$name]['conn'] = $this->createConnection($name, $this->queues[$name]['config']);
+            $this->queues[$name]['conn'] = $this->createConnection($name, $config);
         }
         return $this->queues[$name]['conn'];
     }
 
     protected function createConnection($name, $config)
     {
-        return new Queue\DatabaseConnection($name, $config);
+        $conn = new Queue\DatabaseConnection($name, $config);
+        $conn->setApp($this->app);
+        return $conn;
     }
 
     function registerQueue($name, $config)

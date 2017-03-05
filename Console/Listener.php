@@ -39,9 +39,9 @@ class Listener extends ConsoleActionEvent
                         PHP_BINARY,
                         $this->app->request->getServer('SCRIPT_NAME'),
                         Str :: snake(Str :: classBasename($this)) . '/run',
-                        ' ' . $queue['name']
+                        $queue['name']
                     ]);
-                    //$this->stdout($command);
+                    $this->stdout($command);
                     $queue['proc'] = proc_open($command, $descriptors, $queue['pipes']);
                     foreach ($queue['pipes'] as $pipe) {
                         stream_set_blocking($pipe, 0);
@@ -55,11 +55,18 @@ class Listener extends ConsoleActionEvent
                         $msg .= 'FAILED';
                     }
                     $this->message('CONTROL', '<bold>' . $msg . '</bold>');
+                    sleep(1);
+                    foreach ($queue['pipes'] as $pipe) {
+                        $c = stream_get_contents($pipe);
+                        if (!empty($c)) {
+                            $this->message($queue['name'], $c);
+                        }
+                    }
                 } else {
                     foreach ($queue['pipes'] as $pipe) {
                         $c = stream_get_contents($pipe);
                         if (!empty($c)) {
-                            $this->stdout($c);
+                            $this->message($queue['name'], $c);
                         }
                     }
                 }
@@ -128,11 +135,6 @@ class Listener extends ConsoleActionEvent
                     $this->message($queueName, 'Event ' . get_class($event) . ' received');
                     $result = $this->app->events->callListeners($event);
                     $this->app->queue->success($queueName, $event->id);
-//                    if ($result === false) {
-//                        $this->app->queue->fail($queueName, $event->id);
-//                    } else {
-//                        $this->app->queue->success($queueName, $event->id);
-//                    }
                 }
                 catch (\Exception $e) {
                     $this->app->queue->fail($queueName, $event->id, $e->getMessage());
@@ -140,7 +142,6 @@ class Listener extends ConsoleActionEvent
                 }
                 $count++;
             } else {
-                //$this->message($queueName, 'No events to proceeed');
                 sleep(3);
             }
         }
@@ -148,11 +149,11 @@ class Listener extends ConsoleActionEvent
 
     protected function message($queue, $message)
     {
-        $message = sprintf('%s [%s.%d] %s', date('H:i:s'), $queue, posix_getpid(), $message);
+        $message = sprintf('%s [%s.%d] %s', date('H:i:s'), strtolower($queue), posix_getpid(), $message);
         $this->stdout($message);
         $this->app->triggerEvent(new LogEvent([
             'message' => $message,
-            'category' => 'queue/' . $queue
+            'category' => 'queue/' . strtolower($queue)
         ]));
     }
 

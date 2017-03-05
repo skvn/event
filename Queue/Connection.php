@@ -2,12 +2,13 @@
 
 namespace Skvn\Event\Queue;
 
-use Skvn\Base\Container;
+use Skvn\Base\Traits\AppHolder;
 
 abstract class Connection
 {
+    use AppHolder;
+
     protected $queueName;
-    protected $container;
     protected $config;
 
 
@@ -15,7 +16,6 @@ abstract class Connection
     {
         $this->queueName = $queue;
         $this->config = $config;
-        $this->container = Container :: getInstance();
     }
 
     abstract public function push($event);
