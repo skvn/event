@@ -83,7 +83,7 @@ class Listener extends ConsoleActionEvent
      */
     function actionRun()
     {
-        $this->app['config']['database.log'] = true;
+        //$this->app['config']['database.log'] = true;
 
         $queueName = $this->arguments[0];
         $this->writePid('queue_' . $queueName . '.pid');
