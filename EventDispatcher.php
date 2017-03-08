@@ -44,13 +44,11 @@ class EventDispatcher
 
         if ($event instanceof Contracts\SelfHandlingEvent) {
             $responses[] = $event->handle();
-        }
-
-        if (!isset($this->listeners[get_class($event)])) {
+        } elseif (!isset($this->listeners[get_class($event)])) {
             return false;
         }
 
-        foreach ($this->listeners[get_class($event)] as $listener) {
+        foreach ($this->listeners[get_class($event)] ?? [] as $listener) {
             $result = $this->callListener($listener, $event);
             if ($result === false) {
                 return false;

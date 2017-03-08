@@ -77,7 +77,7 @@ class Listener extends ConsoleActionEvent
 
     /**
      * Start listener on single queue
-     * @argument *queue string name of queue
+     * @argument string *queue name of queue
      *
      * @throws \Skvn\Base\Exceptions\Exception
      */
