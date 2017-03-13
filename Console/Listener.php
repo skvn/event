@@ -83,6 +83,7 @@ class Listener extends ConsoleActionEvent
      */
     function actionRun()
     {
+        declare(ticks=1);
         //$this->app['config']['database.log'] = true;
 
         $queueName = $this->arguments[0];
@@ -174,7 +175,7 @@ class Listener extends ConsoleActionEvent
         $pidfile = $this->app->getPath('@locks/' . $pidfile);
         if (file_exists($pidfile)) {
             $pid = intval(file_get_contents($pidfile));
-            if (posix_kill($pid, 0)) {
+            if (posix_getsid($pid) !== false) {
                 return true;
             }
         }
