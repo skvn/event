@@ -93,7 +93,7 @@ class Listener extends ConsoleActionEvent
         if (!empty($config['discrete'])) {
             $this->message('control', 'Discrete handler ' . $queueName . ' started');
             $events = $this->app->queue->fetch($queueName, $config['limit'] ?? 10);
-            $this->message($queueName, count($events) . ' events received');
+            $this->message('control', $queueName . ': ' .  count($events) . ' events received');
             $classes = [];
             foreach ($events as $event) {
                 try {
@@ -147,7 +147,7 @@ class Listener extends ConsoleActionEvent
             }
             if ($event = $this->app->queue->pop($queueName)) {
                 try {
-                    $this->message($queueName, 'Event ' . get_class($event) . ':' . $event->id . ' received');
+                    $this->message('control', $queueName . ': Event ' . get_class($event) . ':' . $event->id . ' received');
                     $result = $this->app->events->callListeners($event);
                     $this->message($queueName, $result);
                     $this->app->queue->success($queueName, $event->id);
