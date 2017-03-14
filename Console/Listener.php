@@ -147,7 +147,7 @@ class Listener extends ConsoleActionEvent
             }
             if ($event = $this->app->queue->pop($queueName)) {
                 try {
-                    $this->message($queueName, 'Event ' . get_class($event) . ' received');
+                    $this->message($queueName, 'Event ' . get_class($event) . ':' . $event->id . ' received');
                     $result = $this->app->events->callListeners($event);
                     $this->message($queueName, $result);
                     $this->app->queue->success($queueName, $event->id);
