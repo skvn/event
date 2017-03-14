@@ -85,6 +85,7 @@ class Listener extends ConsoleActionEvent
     {
         declare(ticks=1);
         //$this->app['config']['database.log'] = true;
+        $t = time();
 
         $queueName = $this->arguments[0];
         $this->writePid('queue_' . $queueName . '.pid');
@@ -129,6 +130,10 @@ class Listener extends ConsoleActionEvent
         while (true) {
             if (!empty($config['limit']) && $count >= $config['limit']) {
                 $this->message($queueName, $count . ' events executed. Exiting.');
+                break;
+            }
+            if (!empty($config['ttl']) && (time() - $t) > $config['ttl']) {
+                $this->message($queueName, (time() - $t) . ' seconds worked. Exiting.');
                 break;
             }
             if ($event = $this->app->queue->pop($queueName)) {
