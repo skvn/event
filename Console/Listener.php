@@ -25,7 +25,7 @@ class Listener extends ConsoleActionEvent
             $qlist[] = ['name' => $qname, 'pid' => 0, 'started' => 0, 'pipes' => [], 'proc' => null];
         }
         if ($this->checkProcess('queue.pid')) {
-            $this->stdout('<bold><red>Already running</red></bold>');
+            $this->message('control', '<bold><red>Already running</red></bold>');
             return;
         }
         $this->writePid('queue.pid');
@@ -41,7 +41,7 @@ class Listener extends ConsoleActionEvent
                         Str :: snake(Str :: classBasename($this)) . '/run',
                         $queue['name']
                     ]);
-                    $this->stdout($command);
+                    $this->message('control', $command);
                     $queue['proc'] = proc_open($command, $descriptors, $queue['pipes']);
                     foreach ($queue['pipes'] as $pipe) {
                         stream_set_blocking($pipe, 0);
@@ -54,19 +54,19 @@ class Listener extends ConsoleActionEvent
                     } else {
                         $msg .= 'FAILED';
                     }
-                    $this->message('CONTROL', '<bold>' . $msg . '</bold>');
+                    $this->message('control', '<bold>' . $msg . '</bold>');
                     sleep(1);
                     foreach ($queue['pipes'] as $pipe) {
                         $c = stream_get_contents($pipe);
                         if (!empty($c)) {
-                            $this->message($queue['name'], $c);
+                            $this->message('control', $c);
                         }
                     }
                 } else {
                     foreach ($queue['pipes'] as $pipe) {
                         $c = stream_get_contents($pipe);
                         if (!empty($c)) {
-                            $this->message($queue['name'], $c);
+                            $this->message('control', $c);
                         }
                     }
                 }
@@ -91,9 +91,9 @@ class Listener extends ConsoleActionEvent
         $this->writePid('queue_' . $queueName . '.pid');
         $config = $this->app->queue->getQueueConfig($queueName);
         if (!empty($config['discrete'])) {
-            $this->message($queueName, 'Discrete handler started');
+            $this->message('control', 'Discrete handler ' . $queueName . ' started');
             $events = $this->app->queue->fetch($queueName, $config['limit'] ?? 10);
-            $this->message($queueName, count($events) . ' received');
+            $this->message($queueName, count($events) . ' events received');
             $classes = [];
             foreach ($events as $event) {
                 try {
@@ -108,10 +108,14 @@ class Listener extends ConsoleActionEvent
                 }
             }
 
+            $res = [];
             foreach ($classes as $class => $ids) {
                 try {
                     $obj = new $class();
-                    $obj->commit();
+                    $info = $obj->commit();
+                    if (!empty($info)) {
+                        $res[] = $info;
+                    }
                     $this->app->queue->success($queueName, $ids);
                 }
                 catch (\Exception $e) {
@@ -119,8 +123,13 @@ class Listener extends ConsoleActionEvent
                     $this->message($queueName, 'ERROR:' . $e->getMessage());
                 }
             }
+            if (!empty($res)) {
+                $this->message($queueName, implode(PHP_EOL, $res));
+            }
 
-            $this->message($queueName, 'Discrete handler exited');
+
+
+            $this->message('control', 'Discrete handler ' . $queueName . ' exited');
 
             return;
         }
@@ -140,6 +149,7 @@ class Listener extends ConsoleActionEvent
                 try {
                     $this->message($queueName, 'Event ' . get_class($event) . ' received');
                     $result = $this->app->events->callListeners($event);
+                    $this->message($queueName, $result);
                     $this->app->queue->success($queueName, $event->id);
                 }
                 catch (\Exception $e) {
@@ -158,7 +168,7 @@ class Listener extends ConsoleActionEvent
         $message = sprintf('%s [%s.%d] %s', date('H:i:s'), strtolower($queue), posix_getpid(), $message);
         $this->stdout($message);
         $this->app->triggerEvent(new LogEvent([
-            'message' => $message,
+            'message' => strip_tags($message),
             'category' => 'queue/' . strtolower($queue)
         ]));
     }
