@@ -20,7 +20,7 @@ class QueueDispatcher
 
     function push($event)
     {
-        return $this->pushOn(method_exists($event, 'queue') ? $event->queue() : $this->getDefaultQueueName(), $event);
+        return $this->pushOn($event->queue(), $event);
     }
 
     function pushOn($queue, $event)

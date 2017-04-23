@@ -9,4 +9,6 @@ interface BackgroundEvent extends Event
     const STATE_PROCESS = 2;
     const STATE_FAILED = 3;
     const STATE_DONE = 4;
+
+    function queue();
 }
