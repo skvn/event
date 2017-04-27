@@ -13,10 +13,11 @@ trait Scheduled
         return call_user_func_array([$this, $method], $parts);
     }
 
-    protected function hourly()
+    protected function hourly($minutes = '0')
     {
-        return $this->cron('0 * * * * *');
+        return $this->cron($minutes . ' * * * * *');
     }
+
 
     protected function cron($expression)
     {

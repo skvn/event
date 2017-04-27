@@ -9,6 +9,9 @@ use Skvn\Base\Exceptions\ConsoleException;
 use Skvn\Event\Contracts\ScheduledEvent;
 use Skvn\Event\Events\Log;
 use Skvn\Event\Events\SchedulerDone;
+use Skvn\Base\Helpers\File;
+use Skvn\Event\Traits\Scheduled;
+
 
 
 /**
@@ -16,12 +19,19 @@ use Skvn\Event\Events\SchedulerDone;
  * @package Skvn\App\Console
  */
 
-class Schedule extends ConsoleActionEvent
+class Schedule extends ConsoleActionEvent implements ScheduledEvent
 {
     use SelfDescribe;
+    use Scheduled;
 
     protected $defaultAction = "run";
 
+    function schedule()
+    {
+        return [
+            ['time' => $this->hourly(2), 'host' => 38, 'action' => 'state', 'user' => 'wwwuser']
+        ];
+    }
 
     /**
      * Main entry. Check current time and execute commands planed for this minute
@@ -71,6 +81,26 @@ class Schedule extends ConsoleActionEvent
         }, $this->getScheduledEntries(true));
     }
 
+    function actionState()
+    {
+        $list = File :: ls($this->app->getPath('@locks'));
+        foreach ($list as $file) {
+            if (preg_match('#cron\.(\d+)$#', $file, $matches)) {
+                $info = json_decode(file_get_contents($file), true);
+                $ctime = filemtime($file);
+                $state = @pcntl_getpriority($matches[1]) === false ? "KILLED" : "ALIVE";
+                if (isset($this->options['clean'])) {
+                    if ($state == "KILLED") {
+                        unlink($file);
+                        $state = "REMOVED";
+                    }
+                }
+                $this->stdout(str_pad($matches[1], 5, ' ').' '.str_pad($state, 7, ' ') . ' ('.gmdate("H:i:s", time()-$ctime).') ' . $info['command'].'('.json_encode($info['options']) . ')');
+            }
+        }
+
+    }
+
     protected function buildCommand($entry)
     {
         $cmd = [];
@@ -79,10 +109,15 @@ class Schedule extends ConsoleActionEvent
         }
         $cmd[] = PHP_BINARY;
         $cmd[] = $this->app->request->getServer('SCRIPT_NAME');
-        $cmd[] = Str :: snake(Str :: classBasename($entry['command'])) . '/' . $entry['action'];
+        if (!empty($entry['cmd'])) {
+            $cmd[] = $entry['cmd'];
+        } else {
+            $cmd[] = Str :: snake(Str :: classBasename($entry['command'])) . '/' . $entry['action'];
+        }
         foreach ($entry['options'] ?? [] as $k => $v) {
             $cmd[] = '--' . $k . '=' . (is_array($v) ? implode(',', $v) : $v);
         }
+        $cmd[] = '--notify --locks';
         $cmd[] = '>> ' . $this->app->getPath('@var/schedule_out.txt') . ' 2>&1 &';
         return implode(' ', $cmd);
     }
@@ -125,6 +160,12 @@ class Schedule extends ConsoleActionEvent
                 }
                 return $wa <=> $wb;
             });
+        } else {
+            foreach ($this->app->appendScheduledEntries([]) as $entry) {
+                if ($entry['time']->isDue() && $this->app->filterScheduledEntry($entry)) {
+                    $entries[] = $entry;
+                }
+            }
         }
         return $entries;
     }
