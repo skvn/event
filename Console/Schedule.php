@@ -117,7 +117,7 @@ class Schedule extends ConsoleActionEvent implements ScheduledEvent
         foreach ($entry['options'] ?? [] as $k => $v) {
             $cmd[] = '--' . $k . '=' . (is_array($v) ? implode(',', $v) : $v);
         }
-        $cmd[] = '--notify --locks';
+        $cmd[] = '--notify --locks --cron';
         $cmd[] = '>> ' . $this->app->getPath('@var/schedule_out.txt') . ' 2>&1 &';
         return implode(' ', $cmd);
     }
