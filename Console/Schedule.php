@@ -86,16 +86,18 @@ class Schedule extends ConsoleActionEvent implements ScheduledEvent
         $list = File :: ls($this->app->getPath('@locks'));
         foreach ($list as $file) {
             if (preg_match('#cron\.(\d+)$#', $file, $matches)) {
-                $info = json_decode(file_get_contents($file), true);
-                $ctime = filemtime($file);
-                $state = @pcntl_getpriority($matches[1]) === false ? "KILLED" : "ALIVE";
-                if (isset($this->options['clean'])) {
-                    if ($state == "KILLED") {
-                        unlink($file);
-                        $state = "REMOVED";
+                if (file_exists($file)) {
+                    $info = json_decode(file_get_contents($file), true);
+                    $ctime = filemtime($file);
+                    $state = @pcntl_getpriority($matches[1]) === false ? "KILLED" : "ALIVE";
+                    if (isset($this->options['clean'])) {
+                        if ($state == "KILLED") {
+                            unlink($file);
+                            $state = "REMOVED";
+                        }
                     }
+                    $this->stdout(str_pad($matches[1], 5, ' ').' '.str_pad($state, 7, ' ') . ' ('.gmdate("H:i:s", time()-$ctime).') ' . $info['command'].'('.json_encode($info['options']) . ')');
                 }
-                $this->stdout(str_pad($matches[1], 5, ' ').' '.str_pad($state, 7, ' ') . ' ('.gmdate("H:i:s", time()-$ctime).') ' . $info['command'].'('.json_encode($info['options']) . ')');
             }
         }
 
