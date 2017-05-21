@@ -83,7 +83,7 @@ class Schedule extends ConsoleActionEvent implements ScheduledEvent
 
     function actionState()
     {
-        $list = File :: ls($this->app->getPath('@locks'));
+        $list = File :: ls($this->app->getPath('@locks'), ['paths' => true]);
         foreach ($list as $file) {
             if (preg_match('#cron\.(\d+)$#', $file, $matches)) {
                 if (file_exists($file)) {
