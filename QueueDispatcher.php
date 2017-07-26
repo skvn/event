@@ -102,7 +102,7 @@ class QueueDispatcher
 
     protected function createConnection($name, $config)
     {
-        $conn = new Queue\DatabaseConnection($name, $config);
+        $conn = ($config['driver'] ?? null) === 'immediate' ? new Queue\ImmediateConnection($name, $config) : new Queue\DatabaseConnection($name, $config);
         $conn->setApp($this->app);
         return $conn;
     }
