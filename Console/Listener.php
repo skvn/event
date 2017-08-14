@@ -61,6 +61,7 @@ class Listener extends ConsoleActionEvent
                         if (!empty($c)) {
                             $this->message('control', $c);
                         }
+                        unset($c);
                     }
                 } else {
                     foreach ($queue['pipes'] as $pipe) {
@@ -68,10 +69,13 @@ class Listener extends ConsoleActionEvent
                         if (!empty($c)) {
                             $this->message('control', $c);
                         }
+                        unset($c);
                     }
                 }
             }
             sleep(5);
+            $this->strings = [];
+            gc_collect_cycles();
         }
     }
 
