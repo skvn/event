@@ -25,8 +25,11 @@ class EventDispatcher
         }
     }
 
-    public function trigger(Contracts\Event $event)
+    public function trigger(Contracts\Event $event, $immediate = false)
     {
+        if ($immediate) {
+            return $event->handle();
+        }
         if ($event instanceof Contracts\BrowserEvent) {
             $this->browserify($event);
         }
