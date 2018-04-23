@@ -11,7 +11,7 @@ class DatabaseConnection extends Connection
         $event['queue_name'] = $this->queueName;
         $event['state'] = BackgroundEvent :: STATE_NEW;
         $event['created_at'] = time();
-        $this->app['db']->insert($this->config['table'], $event);
+        return $this->app['db']->insert($this->config['table'], $event);
     }
 
     public function pop()
