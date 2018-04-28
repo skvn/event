@@ -32,6 +32,11 @@ class Event implements Contracts\Event, \ArrayAccess
     {
         return $this->payload[$param] ?? null;
     }
+    
+    function set($param, $value)
+    {
+        $this->payload[$param] = $value;
+    }
 
 
 
