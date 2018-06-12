@@ -74,7 +74,7 @@ class EventDispatcher
 
     protected function queue(Contracts\Event $event)
     {
-        $this->app['queue']->push($event);
+        return $this->app['queue']->push($event);
     }
 
     protected function browserify(Contracts\Event $event)
