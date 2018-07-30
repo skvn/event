@@ -19,19 +19,12 @@ use Skvn\Event\Traits\Scheduled;
  * @package Skvn\App\Console
  */
 
-class Schedule extends ConsoleActionEvent implements ScheduledEvent
+class Schedule extends ConsoleActionEvent
 {
     use SelfDescribe;
     use Scheduled;
 
     protected $defaultAction = "run";
-
-    function schedule()
-    {
-        return [
-            ['time' => $this->hourly(2), 'host' => 38, 'action' => 'state', 'user' => 'wwwuser']
-        ];
-    }
 
     /**
      * Main entry. Check current time and execute commands planed for this minute
