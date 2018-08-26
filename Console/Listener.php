@@ -107,7 +107,7 @@ class Listener extends ConsoleActionEvent
                     }
                     $classes[get_class($event)][] = $event->id;
                 } catch (\Exception $e) {
-                    $this->app->queue->fail($queueName, $event->id, $e);
+                    $this->app->queue->fail($queueName, $event->id, $e, get_class($event));
                     $this->message($queueName, 'ERROR:' . $e->getMessage());
                 }
             }
@@ -123,7 +123,7 @@ class Listener extends ConsoleActionEvent
                     $this->app->queue->success($queueName, $ids);
                 }
                 catch (\Exception $e) {
-                    $this->app->queue->fail($queueName, $ids, $e);
+                    $this->app->queue->fail($queueName, $ids, $e, $class);
                     $this->message($queueName, 'ERROR:' . $e->getMessage());
                 }
             }
@@ -157,7 +157,7 @@ class Listener extends ConsoleActionEvent
                     $this->app->queue->success($queueName, $event->id);
                 }
                 catch (\Exception $e) {
-                    $this->app->queue->fail($queueName, $event->id, $e);
+                    $this->app->queue->fail($queueName, $event->id, $e, get_class($event));
                     $this->message($queueName, 'ERROR: ' . $e->getMessage());
                 }
                 $count++;

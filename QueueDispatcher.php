@@ -60,12 +60,13 @@ class QueueDispatcher
         return $event;
     }
 
-    function fail($queue, $ids, $error)
+    function fail($queue, $ids, $error, $class = null)
     {
         $this->connection($queue)->fail($ids, $error);
         $this->app->triggerEvent(new Events\QueueFail([
             'ids' => (array) $ids,
-            'error' => $error
+            'error' => $error,
+            'class' => $class
         ]));
     }
 

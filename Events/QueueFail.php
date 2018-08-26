@@ -12,6 +12,7 @@ use Skvn\Event\Event as BaseEvent;
  * @property \Skvn\App\Application $app
  * @property array $ids
  * @property string $error
+ * @property string $class
  */
 class QueueFail extends BaseEvent
 {
