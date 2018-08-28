@@ -50,13 +50,14 @@ class DatabaseConnection extends Connection
     public function success($ids)
     {
         $ids = (array) $ids;
-        $events = $this->app['db']->select('select * from ' . $this->config['table'] . ' where id in (?)', [$ids]);
-//        $this->app['db']->statement('update ' . $this->config['table'] . ' set state=? where id in (?)', [
-//            BackgroundEvent :: STATE_DONE,
-//            $ids
-//        ]);
-        $this->app['db']->statement('delete from ' . $this->config['table'] . ' where id in (?)', [$ids]);
-        return $events;
+        if (!empty($this->config['leave_on_success'])) {
+            $this->app['db']->statement('update ' . $this->config['table'] . ' set state=? where id in (?)', [
+                BackgroundEvent::STATE_DONE,
+                $ids
+            ]);
+        } else {
+            $this->app['db']->statement('delete from ' . $this->config['table'] . ' where id in (?)', [$ids]);
+        }
     }
 
     public function fail($ids, $error)

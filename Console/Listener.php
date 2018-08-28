@@ -107,7 +107,7 @@ class Listener extends ConsoleActionEvent
                     }
                     $classes[get_class($event)][] = $event->id;
                 } catch (\Exception $e) {
-                    $this->app->queue->fail($queueName, $event->id, $e, get_class($event));
+                    $this->app->queue->failEvent($queueName, $event, $e);
                     $this->message($queueName, 'ERROR:' . $e->getMessage());
                 }
             }
@@ -153,11 +153,11 @@ class Listener extends ConsoleActionEvent
                 try {
                     $this->message('control', $queueName . ': Event ' . get_class($event) . ':' . $event->id . ' received');
                     $result = $this->app->events->callListeners($event);
-                    $this->message($queueName, $result);
-                    $this->app->queue->success($queueName, $event->id);
+                    $this->message($queueName, json_encode($result));
+                    $this->app->queue->successEvent($queueName, $event, $result);
                 }
                 catch (\Exception $e) {
-                    $this->app->queue->fail($queueName, $event->id, $e, get_class($event));
+                    $this->app->queue->failEvent($queueName, $event, $e);
                     $this->message($queueName, 'ERROR: ' . $e->getMessage());
                 }
                 $count++;

@@ -59,6 +59,15 @@ class QueueDispatcher
         $event->id = $data['id'];
         return $event;
     }
+    
+    function failEvent($queue, Event $event, $error)
+    {
+        $this->connection($queue)->fail([$event->id], $error);
+        $this->app->triggerEvent(new Events\QueueFail([
+            'srcEvent' => $event,
+            'error' => $error
+        ]));
+    }
 
     function fail($queue, $ids, $error, $class = null)
     {
@@ -69,11 +78,26 @@ class QueueDispatcher
             'class' => $class
         ]));
     }
-
-    function success($queue, $ids)
+    
+    function successEvent($queue, Event $event, $result = null)
     {
-        $events = $this->connection($queue)->success($ids);
-        $this->app->triggerEvent(new Events\QueueDone(['events' => $events]));
+        $this->connection($queue)->success($event->id);
+        $this->app->triggerEvent(new Events\QueueDone([
+            'srcEvent' => $event,
+            'result' => $result,
+            'queue' => $queue,
+        ]));
+    }
+
+    function success($queue, $ids, $result = null, $class = null)
+    {
+        $this->connection($queue)->success($ids);
+        $this->app->triggerEvent(new Events\QueueDone([
+            'ids' => (array) $ids,
+            'result' => $result,
+            'queue' => $queue,
+            'class' => $class
+        ]));
     }
 
 
