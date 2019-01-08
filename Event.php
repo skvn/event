@@ -13,11 +13,13 @@ class Event implements Contracts\Event, \ArrayAccess
     protected $container;
     public $app;
     public $id;
+    public $delayedTo;
 
-    function __construct($payload = [])
+    function __construct($payload = [], $delayedTo = null)
     {
         $this->payload = $payload;
-        $this->app = $this->container = Container :: getInstance();
+        $this->app = $this->container = Container::getInstance();
+        $this->delayedTo = $delayedTo;
     }
 
     function payload($payload = null)
@@ -37,9 +39,4 @@ class Event implements Contracts\Event, \ArrayAccess
     {
         $this->payload[$param] = $value;
     }
-
-
-
-
-
 }

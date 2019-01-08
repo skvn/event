@@ -9,22 +9,29 @@ class DatabaseConnection extends Connection
     public function push($event)
     {
         $event['queue_name'] = $this->queueName;
-        $event['state'] = BackgroundEvent :: STATE_NEW;
+        $event['state'] = BackgroundEvent::STATE_NEW;
         $event['created_at'] = time();
+        if (empty($event['delayed_to'])) {
+            $event['delayed_to'] = time();
+        } else {
+            if (intval($event['delayed_to']) <= 604800) {
+                $event['delayed_to'] = time() + $event['delayed_to'];
+            }
+        }
         return $this->app['db']->insert($this->config['table'], $event);
     }
 
     public function pop()
     {
         $next = $this->app['db']
-            ->selectOne('select * from ' . $this->config['table'] . ' where queue_name=? and state=? and pid is null order by id limit 1', [
+            ->selectOne('select * from ' . $this->config['table'] . ' where queue_name=? and state=? and pid is null and delayed_to <= ? order by id limit 1', [
                 $this->queueName,
-                BackgroundEvent :: STATE_NEW
+                BackgroundEvent::STATE_NEW,
+                time()
             ]);
-        if ($next)
-        {
+        if ($next) {
             $this->app['db']->update($this->config['table'], [
-                'state' => BackgroundEvent :: STATE_PROCESS,
+                'state' => BackgroundEvent::STATE_PROCESS,
                 'pid' => posix_getpid(),
                 'id' => $next['id']
             ]);
@@ -34,15 +41,16 @@ class DatabaseConnection extends Connection
 
     public function fetch($limit)
     {
-        $this->app['db']->statement('update ' . $this->config['table'] . ' set state=?, pid=? where queue_name=? and state=? and pid is null order by id limit ' . $limit, [
-            BackgroundEvent :: STATE_PROCESS,
+        $this->app['db']->statement('update ' . $this->config['table'] . ' set state=?, pid=? where queue_name=? and state=? and pid is null and delayed_to <= ? order by id limit ' . $limit, [
+            BackgroundEvent::STATE_PROCESS,
             posix_getpid(),
             $this->queueName,
-            BackgroundEvent :: STATE_NEW
+            BackgroundEvent::STATE_NEW,
+            time()
         ]);
         return $this->app['db']->select('select * from ' . $this->config['table'] . ' where queue_name=? and state=? and pid=?', [
             $this->queueName,
-            BackgroundEvent :: STATE_PROCESS,
+            BackgroundEvent::STATE_PROCESS,
             posix_getpid()
         ]);
     }
@@ -64,7 +72,7 @@ class DatabaseConnection extends Connection
     {
         $ids = (array) $ids;
         $this->app['db']->statement('update ' . $this->config['table'] . ' set state=?, error=? where id in (?)', [
-            BackgroundEvent :: STATE_FAILED,
+            BackgroundEvent::STATE_FAILED,
             $error,
             $ids
         ]);

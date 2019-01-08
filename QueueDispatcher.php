@@ -3,12 +3,17 @@
 namespace Skvn\Event;
 
 use Skvn\Base\Traits\AppHolder;
+use Skvn\Base\Helpers\Str;
 
 class QueueDispatcher
 {
     use AppHolder;
 
-    protected $queues = [];
+    private $queues = [];
+    private $availDrivers = [
+        'database' => ['class' => Queue\DatabaseConnection::class],
+        'immediate' => ['class' => Queue\ImmediateConnection::class]
+    ];
 
 
     function __construct($config = [])
@@ -27,15 +32,15 @@ class QueueDispatcher
     {
         return $this->connection($queue)->push([
             'event_name' => get_class($event),
-            'payload' => $this->encode(method_exists($event, 'payload') ? $event->payload() : $event)
+            'payload' => $this->encode(method_exists($event, 'payload') ? $event->payload() : $event),
+            'delayed_to' => $event->delayedTo ?? null
         ]);
     }
 
     function pop($queue)
     {
         $data = $this->connection($queue)->pop();
-        if ($data)
-        {
+        if ($data) {
             return $this->createEvent($data);
         }
     }
@@ -116,7 +121,7 @@ class QueueDispatcher
         return json_decode($data, true);
     }
 
-    protected function connection($name = null)
+    private function connection($name = null)
     {
         $config = $this->getQueueConfig($name);
         if (is_null($this->queues[$name]['conn'])) {
@@ -125,11 +130,22 @@ class QueueDispatcher
         return $this->queues[$name]['conn'];
     }
 
-    protected function createConnection($name, $config)
+    private function createConnection($name, $config)
     {
-        $conn = ($config['driver'] ?? null) === 'immediate' ? new Queue\ImmediateConnection($name, $config) : new Queue\DatabaseConnection($name, $config);
+        $driver = $config['driver'] ?? 'database';
+        if (array_key_exists($driver, $this->availDrivers)) {
+            $class = $this->availDrivers[$driver]['class'];
+            $conn = new $class($name, $config);
+        } else {
+            $conn = $this->createCustomConnection($driver, $name, $config);
+        }
         $conn->setApp($this->app);
         return $conn;
+    }
+    
+    private function createCustomConnection($driver, $name, $config)
+    {
+        throw new Exceptions\QueueException('Custom drivers not supported');
     }
 
     function registerQueue($name, $config)
