@@ -27,11 +27,12 @@ class EventDispatcher
 
     public function trigger(Contracts\Event $event, $immediate = false)
     {
-        if ($immediate) {
-            return $event->handle();
-        }
         if ($event instanceof Contracts\BrowserEvent) {
             $this->browserify($event);
+        }
+        
+        if ($immediate) {
+            return $event->handle();
         }
 
         if ($event instanceof Contracts\BackgroundEvent) {
@@ -77,9 +78,9 @@ class EventDispatcher
         return $this->app['queue']->push($event);
     }
 
-    protected function browserify(Contracts\Event $event)
+    protected function browserify(Contracts\BrowserEvent $event)
     {
-        $this->app['ws']->push($event);
+        $this->app['ws']->push($event->getClientEventName(), $event->getClientEventData());
     }
 
     protected function callListener($listener, Contracts\Event $event)
