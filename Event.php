@@ -39,4 +39,9 @@ class Event implements Contracts\Event, \ArrayAccess
     {
         $this->payload[$param] = $value;
     }
+
+    function dispatch($immediate = false)
+    {
+        $this->app->events->trigger($this, $immediate);
+    }
 }
