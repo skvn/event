@@ -42,6 +42,6 @@ class Event implements Contracts\Event, \ArrayAccess
 
     function dispatch($immediate = false)
     {
-        $this->app->events->trigger($this, $immediate);
+        return $this->app->events->trigger($this, $immediate);
     }
 }
