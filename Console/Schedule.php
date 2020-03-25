@@ -89,7 +89,7 @@ class Schedule extends ConsoleActionEvent
                             $state = "REMOVED";
                         }
                     }
-                    $this->stdout(str_pad($matches[1], 5, ' ').' '.str_pad($state, 7, ' ') . ' ('.gmdate("H:i:s", time()-$ctime).') ' . $info['command'].'('.json_encode($info['options']) . ')');
+                    $this->stdout(str_pad($matches[1], 5, ' ').' '.str_pad($state, 7, ' ') . ' ('.gmdate("H:i:s", time()-$ctime).') ' . $info['command'].'('.json_encode($info['options'] ?? []) . ')');
                 }
             }
         }
