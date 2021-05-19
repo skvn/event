@@ -82,7 +82,11 @@ class Schedule extends ConsoleActionEvent
                 if (file_exists($file)) {
                     $info = json_decode(file_get_contents($file), true);
                     $ctime = filemtime($file);
-                    $state = @pcntl_getpriority($matches[1]) === false ? "KILLED" : "ALIVE";
+                    
+                    $old = error_reporting(0);
+                    $state = pcntl_getpriority($matches[1]) === false ? "KILLED" : "ALIVE";
+                    error_reporting($old);
+                    
                     if (isset($this->options['clean'])) {
                         if ($state == "KILLED") {
                             unlink($file);
