@@ -6,7 +6,7 @@
   "require": {
     "php": ">=7.0.0",
     "skvn/base": "dev-master",
-    "mtdowling/cron-expression": "^1.2"
+    "dragonmantank/cron-expression": "*"
   },
   "autoload": {
     "psr-4": {
