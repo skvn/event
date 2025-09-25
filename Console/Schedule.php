@@ -129,6 +129,9 @@ class Schedule extends ConsoleActionEvent
                 foreach ($command->schedule() as $entry) {
                     if ($all || $entry['time']->isDue() && $this->app->filterScheduledEntry($entry)) {
                         $entry['command'] = $command;
+                        if (array_key_exists('host', $entry)) {
+                            $entry['host'] = $this->app->getClusterHost($entry['host']);
+                        }
                         $entries[] = $entry;
                     }
                 }
@@ -139,8 +142,8 @@ class Schedule extends ConsoleActionEvent
             usort($entries, function($a, $b){
                 $at = explode(' ', $a['time']->getExpression());
                 $bt = explode(' ', $b['time']->getExpression());
-                $wa = $a['host']*1000000;
-                $wb = $b['host']*1000000;
+                $wa = $this->app->getClusterHost($a['host'])*1000000;
+                $wb = $this->app->getClusterHost($b['host'])*1000000;
                 if ($at[2] != '*') $wa += $at[2] * 100000;
                 if ($bt[2] != '*') $wb += $bt[2] * 100000;
                 if ($at[4] != '*') $wa += $at[4] * 10000;
